@@ -113,6 +113,13 @@ def open_tsv(fname, folder):
     print("Processing", len(df), " Images:")
     return df
 
+def open_tsv_cc12m(fname, folder):
+    print("Opening %s Data File..." % fname)
+    df = pd.read_csv(fname, sep='\t', names=["url", "caption"], usecols=range(2))
+    df['folder'] = folder
+    print("Processing", len(df), " Images:")
+    return df
+
 def df_from_shelve(chunk_size, func, dataset_name):
     print("Generating Dataframe from results...")
     with shelve.open('%s_%s_%s_results.tmp' % (dataset_name, func.__name__, chunk_size)) as results:
@@ -124,6 +131,15 @@ def df_from_shelve(chunk_size, func, dataset_name):
 num_processes = 32
 # chunk_size is how many images per chunk per process - changing this resets progress when restarting.
 images_per_part = 100
+
+data_name = 'cc12m'
+df = open_tsv_cc12m("cc12m.tsv",data_name)
+df_multiprocess(df=df, processes=num_processes, chunk_size=images_per_part, func=download_image, dataset_name=data_name)
+df = df_from_shelve(chunk_size=images_per_part, func=download_image, dataset_name=data_name)
+df.to_csv("downloaded_%s_report.tsv.gz" % data_name, compression='gzip', sep='\t', header=False, index=False)
+print("Saved.")
+quit()
+
 
 data_name = "validation"
 df = open_tsv("Validation_GCC-1.1.0-Validation.tsv", data_name)
